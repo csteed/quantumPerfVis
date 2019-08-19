@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<meta lang="en">
+<html>
+
+<head>
+    <title>Quantum Performance Analysis</title>
+    <script type="text/javascript" src="lib/d3.min.js"></script>
+    <script type="text/javascript" src="lib/pcpCanvasChart.js"></script>
+
+    <style>
+        .brush .extent {
+            fill-opacity: .3;
+            stroke: #fff;
+            shape-rendering: crispEdges;
+        }
+
+        .axis line,
+        .axis path {
+            fill: none;
+            stroke: rgb(51, 51, 51);
+            stroke-width: 1.5;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            fill: black;
+            text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <center>
+        <input type="file" id="fileInput" onchange="fileChanged()" multiple><br/>
+        <input type="range" min="1" max="100" value="50" class="slider" id="opacityRange" onchange="opacityRangeChanged()" text="Line Opacity Slider"><br/>
+    </center>
+
+    <div id="chart" style="position: relative;"></div>
+    <hr>
+    <center>
+        <p>&copy; <a href="http://csteed.com">Chad A. Steed</a>
+            <script type="text/javascript">
+                document.write(new Date().getFullYear());
+            </script>
+        </p>
+    </center>
+    
+    <script>
+        const margin = {top: 50, right: 10, bottom: 20, left: 10};
+        let chartData;
+        let chart;
+        let chartTitle = 'Quantum Performance Analysis';
+
+        const opacityRangeChanged = () => {
+            const opacity = document.getElementById('opacityRange').value / 100.;
+            if (chart) {
+                chart.selectedLineOpacity(opacity);
+            }
+            console.log(`opacity is ${opacity}`);
+        }
+
+        const fileChanged = () => {
+            const files = document.getElementById('fileInput').files;
+            // console.log(files);
+            chartData = null;
+
+            if (files) {
+                for (let i = 0; i < files.length; i++) {
+                    let file = files[i];
+                    let reader = new FileReader();
+                    reader.onload = function (thefile) {
+                        data = d3.csvParse(reader.result);
+                        loadData(data);
+                    }
+                    reader.readAsText(file);
+                }
+            }
+        }
+
+        const parseFile = (reader) => {
+            data = d3.csvParse(reader.result);
+            // console.log(data);
+            loadData(data);
+        }
+
+        const loadData = (data) => {
+            if (!chartData) {
+                chartData = data;
+            } else {
+                // console.log(chartData);
+                // console.log(data);
+                chartData = chartData.concat(data);
+            }
+            // console.log(chartData);
+            removeChart();
+            createChart();
+        }
+
+        const removeChart = () => {
+            d3.select("#chart").selectAll('*').remove();
+        }
+
+        const createChart = () => {
+            if (chartData) {
+                let chartWidth = document.getElementById("chart").clientWidth;
+                let chartHeight = 180;
+                document.getElementById('chart').style.height = `${chartHeight}px`;
+
+                // console.log(`chartWidth: ${chartWidth}  chartHeight: ${chartHeight}`);
+
+                chart = pcpChart()
+                    .titleText(chartTitle)
+                    .showSelectedLines(true)
+                    .showUnselectedLines(false)
+                    .selectedLineOpacity(0.45)
+                    .unselectedLineOpacity(0.1)
+                    .width(chartWidth)
+                    .height(chartHeight)
+                    .margin(margin);
+                d3.select("#chart").call(chart, chartData);
+            }
+        };
+    </script>
+</body>
