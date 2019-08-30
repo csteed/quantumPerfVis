@@ -5,9 +5,21 @@
 <head>
     <title>Quantum Performance Analysis</title>
     <script type="text/javascript" src="lib/d3.min.js"></script>
-    <script type="text/javascript" src="lib/pcpCanvasChart.js"></script>
+    <!-- <script type="text/javascript" src="lib/pcpCanvasChart.js"></script> -->
+    <script type="text/javascript" src="lib/qParSetChart.js"></script>
 
     <style>
+        /* .foreground path {
+            fill: none;
+            stroke: steelblue;
+        }
+
+        .background path {
+            fill: none;
+            stroke: #ddd;
+            shape-rendering: crispEdges;
+        } */
+
         .brush .extent {
             fill-opacity: .3;
             stroke: #fff;
@@ -46,10 +58,19 @@
     </center>
     
     <script>
-        const margin = {top: 50, right: 10, bottom: 20, left: 10};
+        const margin = {top: 50, right: 10, bottom: 20, left: 40};
         let chartData;
+        let chartDimensions;
         let chart;
         let chartTitle = 'Quantum Performance Analysis';
+
+        d3.csv('data/measurements-5d4a2fbc496ed2001142fe20.csv', d3.autoType)
+        .then(function (data) {
+            loadData(data);
+        })
+        .catch(function(error) {
+            console.log(error);
+        })
 
         const opacityRangeChanged = () => {
             const opacity = document.getElementById('opacityRange').value / 100.;
@@ -63,13 +84,14 @@
             const files = document.getElementById('fileInput').files;
             // console.log(files);
             chartData = null;
+            chartDimensions = null;
 
             if (files) {
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
                     let reader = new FileReader();
                     reader.onload = function (thefile) {
-                        data = d3.csvParse(reader.result);
+                        data = d3.csvParse(reader.result, d3.autoType);
                         loadData(data);
                     }
                     reader.readAsText(file);
@@ -77,21 +99,40 @@
             }
         }
 
-        const parseFile = (reader) => {
-            data = d3.csvParse(reader.result);
-            // console.log(data);
-            loadData(data);
-        }
+        // const parseFile = (reader) => {
+        //     data = d3.csvParse(reader.result, d3.autoType);
+        //     // console.log(data);
+        //     loadData(data);
+        // }
 
         const loadData = (data) => {
             if (!chartData) {
                 chartData = data;
+                chartDimensions = [];
+                for (index in data.columns) {
+                    chartDimensions.push(
+                        {
+                            name: data.columns[index],
+                            type: data.columns[index] === 'sample' ? 'numerical' : 'categorical',
+                        }
+                    );
+                }
             } else {
-                // console.log(chartData);
-                // console.log(data);
                 chartData = chartData.concat(data);
+                // for (index in data.columns) {
+                //     let columnExists = chartAxes.find((d) => {
+                //         return d.name === data.columns[index];
+                //     });
+                //     if (!columnExists) {
+                //         // remove data from that column from the array
+                //         // or add a dummy column to this data with null values
+                //     }
+                // }
             }
-            // console.log(chartData);
+
+            console.log(chartData);
+            console.log(chartDimensions);
+
             removeChart();
             createChart();
         }
@@ -103,13 +144,12 @@
         const createChart = () => {
             if (chartData) {
                 let chartWidth = document.getElementById("chart").clientWidth;
-                let chartHeight = 180;
+                let chartHeight = 200;
                 document.getElementById('chart').style.height = `${chartHeight}px`;
-
-                // console.log(`chartWidth: ${chartWidth}  chartHeight: ${chartHeight}`);
 
                 chart = pcpChart()
                     .titleText(chartTitle)
+                    .dimensions(chartDimensions)
                     .showSelectedLines(true)
                     .showUnselectedLines(false)
                     .selectedLineOpacity(0.45)
