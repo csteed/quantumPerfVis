@@ -34,7 +34,7 @@
         <input type="file" id="fileInput" onchange="fileChanged()" multiple><br/>
         <label for="opacityRange">Line Opacity: </label><input type="range" min="1" max="100" value="50" class="slider" id="opacityRange" onchange="opacityRangeChanged()" text="Line Opacity Slider"><br/>
         <label for="queryMode">Query Mode: </label>
-        <select id="queryModeSelect">
+        <select id="queryModeSelect" onchange="queryModeChanged()">
             <option>AND</option>
             <option>OR</option>
             <option>XOR</option>
@@ -72,6 +72,14 @@
                 chart.selectedLineOpacity(opacity);
             }
             console.log(`opacity is ${opacity}`);
+        }
+
+        const queryModeChanged = () => {
+            const queryMode = document.getElementById('queryModeSelect').value;
+            console.log('queryMode is ${queryMode');
+            if (chart) {
+                chart.queryMode(queryMode);
+            }
         }
 
         const fileChanged = () => {
@@ -138,8 +146,9 @@
         const createChart = () => {
             if (chartData) {
                 let chartWidth = document.getElementById("chart").clientWidth;
-                let chartHeight = 260;
+                let chartHeight = 300;
                 document.getElementById('chart').style.height = `${chartHeight}px`;
+                let queryMode = document.getElementById("queryModeSelect").value;
 
                 chart = pcpChart()
                     .titleText(chartTitle)
@@ -150,6 +159,7 @@
                     .unselectedLineOpacity(0.1)
                     .width(chartWidth)
                     .height(chartHeight)
+                    .queryMode(queryMode)
                     .margin(margin);
                 d3.select("#chart").call(chart, chartData);
             }
